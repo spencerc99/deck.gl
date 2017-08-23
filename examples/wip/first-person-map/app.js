@@ -23,8 +23,11 @@ import {setParameters} from 'luma.gl';
 
 import {json as requestJson} from 'd3-request';
 
-const BUILDINGS_DATA = '../../trips/data/buildings.json';
-const TRIPS_DATA = '../../trips/data/trips.json';
+// Source data CSV
+const DATA_URL = {
+  BUILDINGS: 'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/buildings.json',  // eslint-disable-line
+  TRIPS: 'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/trips.json'  // eslint-disable-line
+};
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
@@ -72,13 +75,13 @@ class Root extends Component {
       trailLength: 50
     };
 
-    requestJson(BUILDINGS_DATA, (error, response) => {
+    requestJson(DATA_URL.BUILDINGS, (error, response) => {
       if (!error) {
         this.setState({buildings: response});
       }
     });
 
-    requestJson(TRIPS_DATA, (error, response) => {
+    requestJson(DATA_URL.TRIPS, (error, response) => {
       if (!error) {
         this.setState({trips: response});
       }
