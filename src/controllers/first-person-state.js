@@ -6,7 +6,6 @@ import assert from 'assert';
 const MOVEMENT_SPEED = 2;  // 1 meter per keyboard click
 // const ROTATION_STEP_RADIANS = 0.03;
 const ROTATION_STEP_DEGREES = 3;
-const Y_AXIS_INVERSION = [1, -1, 1];
 
 const defaultState = {
   position: [0, 0, 0],

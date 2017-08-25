@@ -21,7 +21,6 @@
 import log from '../utils/log';
 
 // TODO - replace with math.gl
-import {Vector3} from 'math.gl';
 import {equals} from '../math/equals';
 import mat4_scale from 'gl-mat4/scale';
 import mat4_translate from 'gl-mat4/translate';
@@ -34,7 +33,7 @@ import mat4_perspective from 'gl-mat4/perspective';
 import {transformVector, createMat4, extractCameraVectors} from '../math/utils';
 
 import {
-  projectFlat,
+  // projectFlat,
   // unprojectFlat,
   getMercatorDistanceScales,
   getMercatorWorldPosition

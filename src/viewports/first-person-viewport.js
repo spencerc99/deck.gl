@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Viewport from './viewport';
-import {Vector3, Matrix4, experimental} from 'math.gl';
+import {Matrix4, experimental} from 'math.gl';
 const {SphericalCoordinates} = experimental;
 
 // import {projectFlat} from '../viewport-mercator-project/web-mercator-utils';
@@ -37,16 +37,18 @@ export default class FirstPersonViewport extends Viewport {
     const {
       // view matrix arguments
       bearing,
-      pitch,
+      // pitch,
       lookAt, // Which point is camera looking at, default along y axis
       direction, // Which direction camera is looking at
       up = [0, 1, 0] // Defines up direction, default positive y axis,
     } = opts;
 
     const eye = opts.eye || opts.position; // Defines eye position
-    // const dir = direction || getDirectionFromBearingAndPitch({bearing, pitch: 90}).scale([1, -1, 1]);
+    // const dir = direction ||
+    //   getDirectionFromBearingAndPitch({bearing, pitch: 90}).scale([1, -1, 1]);
     // const center = dir ? new Vector3(eye).add(dir) : lookAt;
-    const dir = direction || getDirectionFromBearingAndPitch({bearing, pitch: 90}); // .scale([1, -1, 1]);
+    const dir = direction || getDirectionFromBearingAndPitch({bearing, pitch: 90});
+    // .scale([1, -1, 1]);
     const center = dir ? dir : lookAt;
 
     const viewMatrix = new Matrix4()

@@ -5,7 +5,10 @@ import {render} from 'react-dom';
 import {StaticMap} from 'react-map-gl';
 
 // import DeckGL from 'deck.gl';
-import DeckGL from './deckgl-multiview';
+import {experimental} from 'deck.gl';
+const {DeckGLMultiView: DeckGL, ViewportLayout} = experimental;
+
+// import DeckGL from './deckgl-multiview';
 import {ViewportController} from 'deck.gl';
 import {FirstPersonState} from 'deck.gl';
 import {FirstPersonViewport} from 'deck.gl';
@@ -19,6 +22,9 @@ import TripsLayer from '../../trips/trips-layer';
 import {setParameters} from 'luma.gl';
 
 import {json as requestJson} from 'd3-request';
+
+const BUILDINGS_DATA = '../../trips/data/buildings.json';
+const TRIPS_DATA = '../../trips/data/trips.json';
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
@@ -66,13 +72,13 @@ class Root extends Component {
       trailLength: 50
     };
 
-    requestJson('./data/buildings.json', (error, response) => {
+    requestJson(BUILDINGS_DATA, (error, response) => {
       if (!error) {
         this.setState({buildings: response});
       }
     });
 
-    requestJson('./data/trips.json', (error, response) => {
+    requestJson(TRIPS_DATA, (error, response) => {
       if (!error) {
         this.setState({trips: response});
       }
@@ -223,34 +229,27 @@ class Root extends Component {
   render() {
     const {viewportProps, fov} = this.state;
 
-    const mapViewport = new WebMercatorViewport({
-      ...viewportProps,
-      height: viewportProps.height / 2
-    });
-
-    const firstPersonViewport = new FirstPersonViewport(Object.assign({}, viewportProps, {
-      y: viewportProps.height / 2,
-      height: viewportProps.height / 2,
-      // // viewportProps arguments
-      // width: viewportProps.width, // Width of viewportProps
-      // height: viewportProps.height, // Height of viewportProps
-      // longitude: viewportProps.longitude,
-      // latitude: viewportProps.latitude,
-      // zoom: viewportProps.zoom,
-      // // view matrix arguments
-      // eye: [100, 0, 2], // Defines eye position
-      // lookAt: [0, 1, 0], // Which point is camera looking at, default origin
-      // up: [0, 0, 1], // Defines up direction, default positive y axis
-      // projection matrix arguments
-      fovy: fov, // Field of view covered by camera
-      near: 1, // Distance of near clipping plane
-      far: 10000 // Distance of far clipping plane
-    }));
-
-    // console.log(viewportProps.position, viewportProps.direction, viewportProps.lookAt);
-    // eslint-disable-line
-
-    // const viewport = this.state.viewportMode ? firstPersonViewport : mapViewport;
+    const viewports = [
+      new FirstPersonViewport({
+        ...viewportProps,
+        height: viewportProps.height / 2,
+        fovy: fov, // Field of view covered by camera
+        near: 1, // Distance of near clipping plane
+        far: 10000 // Distance of far clipping plane
+      }),
+      {
+        viewport: new WebMercatorViewport({
+          ...viewportProps,
+          y: viewportProps.height / 2,
+          height: viewportProps.height / 2
+        }),
+        component: <StaticMap
+          {...viewportProps}
+          mapStyle="mapbox://styles/mapbox/dark-v9"
+          onViewportChange={this._onViewportChange.bind(this)}
+          mapboxApiAccessToken={MAPBOX_TOKEN}/>
+      }
+    ];
 
     return (
       <div style={{backgroundColor: '#000'}}>
@@ -262,37 +261,31 @@ class Root extends Component {
           height={viewportProps.height}
           onViewportChange={this._onViewportChange} >
 
-          <div style={{position: 'absolute', left: 0, bottom: 0}}>
-            <StaticMap
-              visible={mapViewport.isMapSynched()}
-              {...viewportProps}
-              width={viewportProps.width}
-              height={viewportProps.height / 2}
-              zoom={viewportProps.zoom}
-              mapStyle="mapbox://styles/mapbox/dark-v9"
-              onViewportChange={this._onViewportChange.bind(this)}
-              mapboxApiAccessToken={MAPBOX_TOKEN}/>
-          </div>
+          <ViewportLayout viewports={viewports}>
 
-          <div style={{position: 'absolute', left: 0, top: 0}}>
             <DeckGL
               id="first-person"
               width={viewportProps.width}
               height={viewportProps.height}
+              viewports={viewports}
               useDevicePixelRatio={false}
-              leftViewport={mapViewport}
-              rightViewport={firstPersonViewport}
               layers={this._renderLayers()}
               onWebGLInitialized={this._initialize} />
-          </div>
+
+          </ViewportLayout>
+
+          {this._renderOptionsPanel()}
 
         </ViewportController>
-
-        {this._renderOptionsPanel()}
 
       </div>
     );
   }
 }
+
+// <div style={{position: 'absolute', left: 0, bottom: 0}}>
+// </div>
+
+// <div style={{position: 'absolute', left: 0, top: 0}}>
 
 render(<Root />, document.body.appendChild(document.createElement('div')));
