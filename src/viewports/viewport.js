@@ -32,6 +32,8 @@ import mat4_perspective from 'gl-mat4/perspective';
 
 import {transformVector, createMat4, extractCameraVectors} from '../math/utils';
 
+import {Matrix4} from 'math.gl';
+
 import {
   // projectFlat,
   // unprojectFlat,
@@ -122,25 +124,31 @@ export default class Viewport {
     this.scale = Math.pow(2, zoom);
 
     // Calculate distance scales if lng/lat/zoom are provided
-    const geospatialParamsSupplied = !isNaN(latitude) || !isNaN(longitude) || !isNaN(zoom);
-    if (geospatialParamsSupplied) {
-      this.distanceScales = getMercatorDistanceScales({latitude, longitude, scale: this.scale});
-    } else {
-      this.distanceScales = distanceScales || DEFAULT_DISTANCE_SCALES;
-    }
+    const isGeospatialViewport = !isNaN(latitude) || !isNaN(longitude) || !isNaN(zoom);
 
-    this.viewMatrixUncentered = viewMatrix;
+    this.distanceScales = isGeospatialViewport ?
+      getMercatorDistanceScales({latitude, longitude, scale: this.scale}) :
+      distanceScales || DEFAULT_DISTANCE_SCALES;
 
     // Determine camera center
-    this.center = geospatialParamsSupplied ?
+    this.center = isGeospatialViewport ?
       getMercatorWorldPosition({longitude, latitude, zoom, meterOffset: position}) :
       position;
 
+    this.viewMatrixUncentered = viewMatrix;
+
     // Make a centered version of the matrix for projection modes without an offset
-    this.viewMatrix = createMat4();
-    this.viewMatrix = mat4_translate(this.viewMatrix, this.viewMatrixUncentered, [0, 0, 0]);
-    this.viewMatrix = mat4_translate(
-      this.viewMatrix, this.viewMatrix, this.center.clone().negate());
+    // this.viewMatrix = mat4_translate(this.viewMatrix, , [0, 0, 0]);
+    // this.viewMatrix = mat4_translate(
+    //   this.viewMatrix, this.viewMatrix, this.center.clone().negate());
+    this.viewMatrix = new Matrix4()
+      // Apply the uncentered view matrix
+      .multiplyRight(this.viewMatrixUncentered)
+      // The Mercator world coordinate system is upper left,
+      // but GL expects lower left, so we flip it around the center after all transforms are done
+      .scale([1, -1, 1])
+      // And center it
+      .translate(this.center.clone().negate());
 
     // Create a projection matrix if not supplied
     this.projectionMatrix = projectionMatrix || createPerspectiveProjectionMatrix({

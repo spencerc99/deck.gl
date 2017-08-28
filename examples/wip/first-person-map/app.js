@@ -16,10 +16,17 @@ import {FirstPersonViewport} from 'deck.gl';
 // import {MapController} from 'deck.gl';
 import {WebMercatorViewport} from 'deck.gl';
 
-import {PolygonLayer, PointCloudLayer, COORDINATE_SYSTEM} from 'deck.gl';
-import TripsLayer from '../../trips/trips-layer';
+import {
+  COORDINATE_SYSTEM,
+  // PolygonLayer, PointCloudLayer, ScatterplotLayer,
+  ArcLayer
+  // LineLayer, HexagonCellLayer
+} from 'deck.gl';
+
+// import TripsLayer from '../../trips/trips-layer';
 
 import {setParameters} from 'luma.gl';
+// import {Vector3} from 'math.gl';
 
 import {json as requestJson} from 'd3-request';
 
@@ -32,14 +39,14 @@ const DATA_URL = {
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
-const LIGHT_SETTINGS = {
-  lightsPosition: [-74.05, 40.7, 8000, -73.5, 41, 5000],
-  ambientRatio: 0.05,
-  diffuseRatio: 0.6,
-  specularRatio: 0.8,
-  lightsStrength: [3.0, 0.0, 0.5, 0.0],
-  numberOfLights: 2
-};
+// const LIGHT_SETTINGS = {
+//   lightsPosition: [-74.05, 40.7, 8000, -73.5, 41, 5000],
+//   ambientRatio: 0.05,
+//   diffuseRatio: 0.6,
+//   specularRatio: 0.8,
+//   lightsStrength: [3.0, 0.0, 0.5, 0.0],
+//   numberOfLights: 2
+// };
 
 const DEFAULT_VIEWPORT_PROPS = {
   longitude: -74,
@@ -51,7 +58,7 @@ const DEFAULT_VIEWPORT_PROPS = {
 
   // view matrix arguments
   // position: [100, 0, 2], // Defines eye position
-  position: [0, 0, 2], // Defines eye position
+  position: [0, 0, 20], // Defines eye position
   // direction: [-0.9, 0.5, 0], // Which direction is camera looking at, default origin
   up: [0, 0, 1] // Defines up direction, default positive y axis
 };
@@ -62,7 +69,7 @@ class Root extends Component {
     super(props);
     this.state = {
       viewportMode: true,
-      fov: 75,
+      fov: 60,
 
       viewportProps: {
         ...DEFAULT_VIEWPORT_PROPS,
@@ -141,7 +148,7 @@ class Root extends Component {
   }
 
   _onFovChange() {
-    this.setState({fov: this.state.fov === 75 ? 35 : 75});
+    this.setState({fov: this.state.fov === 60 ? 35 : 60});
   }
 
   _renderOptionsPanel() {
@@ -167,65 +174,104 @@ class Root extends Component {
   }
 
   _renderLayers() {
-    const {buildings, trips, trailLength, time} = this.state;
-
-    const {viewportProps} = this.state;
-    const {position} = viewportProps;
-
     const {longitude, latitude} = DEFAULT_VIEWPORT_PROPS;
+    // const {viewportProps} = this.state;
+    // const {position} = viewportProps;
 
-    if (!buildings || !trips) {
-      return [];
-    }
+    // const {buildings, trips, trailLength, time} = this.state;
+    // if (!buildings || !trips) {
+    //   return [];
+    // }
 
     return [
-      new TripsLayer({
-        id: 'trips',
-        data: trips,
-        getPath: d => d.segments,
-        getColor: d => d.vendor === 0 ? [253, 128, 93] : [23, 184, 190],
-        opacity: 0.3,
-        strokeWidth: 2,
-        trailLength,
-        currentTime: time
-      }),
-      new PolygonLayer({
-        id: 'buildings',
-        data: buildings,
-        extruded: true,
-        wireframe: false,
-        fp64: true,
-        opacity: 0.5,
-        getPolygon: f => f.polygon,
-        getElevation: f => f.height,
-        getFillColor: f => [74, 80, 87],
-        lightSettings: LIGHT_SETTINGS
-      }),
-      new PointCloudLayer({
-        id: 'point-cloud',
-        outline: true,
-        data: new Array(100).fill(0).map((v, i) => ({
-          position: [(Math.random() - 0.5) * i, (Math.random() - 0.5) * i, Math.random() * i],
-          color: [255, 0, 0, 255],
-          normal: [1, 0, 0]
-        })),
-        projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
-        positionOrigin: [longitude, latitude],
-        opacity: 1,
-        radiusPixels: 4
-      }),
-      new PointCloudLayer({
-        id: 'player',
+      // new TripsLayer({
+      //   id: 'trips',
+      //   data: trips,
+      //   getPath: d => d.segments,
+      //   getColor: d => d.vendor === 0 ? [253, 128, 93] : [23, 184, 190],
+      //   opacity: 0.3,
+      //   strokeWidth: 2,
+      //   trailLength,
+      //   currentTime: time
+      // }),
+      // new PolygonLayer({
+      //   id: 'buildings',
+      //   data: buildings,
+      //   extruded: true,
+      //   wireframe: false,
+      //   fp64: true,
+      //   opacity: 0.5,
+      //   getPolygon: f => f.polygon,
+      //   getElevation: f => f.height,
+      //   getFillColor: f => [74, 80, 87],
+      //   lightSettings: LIGHT_SETTINGS
+      // }),
+      // new PointCloudLayer({
+      //   id: 'point-cloud',
+      //   outline: true,
+      //   data: new Array(100).fill(0).map((v, i) => ({
+      //     position: [(Math.random() - 0.5) * i, (Math.random() - 0.5) * i, Math.random() * i],
+      //     color: [255, 255, 255, 255],
+      //     normal: [1, 1, 1]
+      //   })),
+      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+      //   positionOrigin: [longitude, latitude],
+      //   opacity: 1,
+      //   radiusPixels: 20
+      // }),
+      // new PointCloudLayer({
+      //   id: 'player',
+      //   data: [{
+      //     position,
+      //     color: [0, 255, 255, 255],
+      //     normal: [1, 0, 0]
+      //   }],
+      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+      //   positionOrigin: [longitude, latitude],
+      //   opacity: 1,
+      //   radiusPixels: 20
+      // }),
+      // new ScatterplotLayer({
+      //   id: 'player2',
+      //   data: [{
+      //     position: new Vector3(position).clone().add([-200, -200, 0]),
+      //     color: [0, 255, 0, 255],
+      //     radius: 1,
+      //     normal: [1, 0, 0]
+      //   }],
+      //   fp64: true,
+      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+      //   positionOrigin: [longitude, latitude],
+      //   opacity: 1,
+      //   radiusScale: 20
+      // }),
+      new ArcLayer({
+        id: 'player2',
         data: [{
-          position,
-          color: [0, 255, 255, 255],
+          sourcePosition: [-400, -400, 0],
+          targetPosition: [-200, -200, 0],
+          color: [0, 255, 0, 255],
           normal: [1, 0, 0]
         }],
+        fp64: true,
         projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
         positionOrigin: [longitude, latitude],
         opacity: 1,
-        radiusPixels: 40
+        strokeWidth: 200
       })
+      // new HexagonCellLayer({
+      //   id: 'player-hex',
+      //   data: [{
+      //     centroid: [0, 0, 0],
+      //     color: [0, 255, 255, 255],
+      //     elevation: 5
+      //   }],
+      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+      //   positionOrigin: [longitude, latitude],
+      //   opacity: 1,
+      //   radius: 100,
+      //   angle: 0
+      // })
     ];
   }
 

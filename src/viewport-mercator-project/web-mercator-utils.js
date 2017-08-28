@@ -184,16 +184,14 @@ export function makeUncenteredViewMatrixFromMercatorParams({
   altitude,
   center
 }) {
-  // VIEW MATRIX: PROJECTS FROM VIRTUAL PIXELS TO CAMERA SPACE
+  // VIEW MATRIX: PROJECTS MERCATOR WORLD COORDINATES
+  // Note that mercator world coordinates typically need to be flipped
+  //
   // Note: As usual, matrix operation orders should be read in reverse
   // since vectors will be multiplied from the right during transformation
   const vm = createMat4();
 
-  // The Mercator world coordinate system is upper left,
-  // but GL expects lower left, so we flip it around the center
-  mat4_scale(vm, vm, [1, -1, 1]);
-
-  // Move camera to altitude
+  // Move camera to altitude (along the pitch & bearing direction)
   mat4_translate(vm, vm, [0, 0, -altitude]);
 
   // After the rotateX, z values are in pixel units. Convert them to
@@ -201,8 +199,8 @@ export function makeUncenteredViewMatrixFromMercatorParams({
   mat4_scale(vm, vm, [1, 1, 1 / height]);
 
   // Rotate by bearing, and then by pitch (which tilts the view)
-  mat4_rotateX(vm, vm, pitch * DEGREES_TO_RADIANS);
-  mat4_rotateZ(vm, vm, -bearing * DEGREES_TO_RADIANS);
+  mat4_rotateX(vm, vm, -pitch * DEGREES_TO_RADIANS);
+  mat4_rotateZ(vm, vm, bearing * DEGREES_TO_RADIANS);
 
   return vm;
 }

@@ -1,8 +1,8 @@
-# RFC - First Person Mercator Controls
+# RFC - First Person Viewport
 
 * **Author**: Ib Green
 * **Date**: August 10, 2017
-* **Status**: **Approved**
+* **Status**: **Pre-Approved**
 
 Notes:
 * Please add comments as reviews to the [PR](https://github.com/uber/deck.gl/pull/838)
@@ -12,7 +12,7 @@ Notes:
 
 deck.gl is increasingly being used creating hybrid geospatial visualization apps, where we not only overlay abstract 3D data overlays on maps (like arcs and hexagons), but where we render actual 3D models (such as 3D buildings, car models and point clouds etc) on top of maps at local (human) scales.
 
-These “hybrid” applications allows us to zoom from overhead map views down to “streetside” positions where it becomes less valuable (or even impossible) to display overhead views of the map.
+These “hybrid” applications allows us to zoom from overhead map views down to “streetside” positions where it becomes less valuable (or even impossible, e.g. due to high pitch levels) to display overhead views of the map.
 
 Instead it becomes interesting to give the user freedom to move the camera around in the 3D scene, as if being present inside it. It might for example be desirable to let the user take the viewpoint of a pedestrian on the street or take the driver’s seat of a car, and to enable the user to look around or even up (away from the ground/map), as if in a first person 3D game.
 

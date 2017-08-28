@@ -15,11 +15,13 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## Pre Releases
+For Beta Releases see below
 
-### deck.gl v4.2
+## Official Releases
 
-#### [4.2.0-alpha.4] -
+### deck.gl v4.1
+
+#### [4.1.1] - Patch Release
 
 - NEW: Automatic/custom highlighting using picking shader module.
 - FIX: ScreenGridLayer `depthTest`
@@ -30,27 +32,6 @@ Ref: http://keepachangelog.com/en/0.3.0/
 - NEW: RFCs
 - DOCS: picking/event handling refresh
 - DEMO: Wind demo fixes
-
-#### [4.2.0-alpha.3] - Note: from 4.2-DEV
-
-- Fixes for first person viewports in METER_OFFSET mode
-
-#### [4.2.0-alpha.2] - Note: from 4.2-DEV
-
-- Unifiy react controllers as `ViewportController`, export from react dir.
-- Add FirstPersonState
-- Add FirstPersonViewport, ThirdPersonViewport
-- Move viewports and some utils out of `lib` folder.
-- Add `start-es6` script to layer-browser
-- Remove UTM_OFFSETS projection mode
-
-#### [4.2.0-alpha.1]
-
-- Add: UTM_OFFSETS projection mode
-
-## Official Releases
-
-### deck.gl v4.1
 
 #### [4.1.0] - 2017-7-27 Minor deck.gl Release
 
@@ -207,7 +188,44 @@ For details see [What's New](docs/whats-new.md)
 #### [1.0.0] - 2016-01-06
 - Initial commit of the open-source version of deck.gl
 
+
+
 ## Beta Releases
+
+### deck.gl v4.2 Beta Releases
+
+#### [4.2.0-alpha.5] -
+- FIXES for First Person View
+
+#### [4.2.0-alpha.4] -
+- NEW: Automatic/custom highlighting using picking shader module.
+- FIX: ScreenGridLayer `depthTest`
+- FIX: CompositeLayer `parameters` forwarding
+- FIX: S2Layer prop forwarding
+- FIX: GridLayer crash: max call stack size
+- NEW: Add `devicePixelRatio` prop
+- NEW: RFCs
+- DOCS: picking/event handling refresh
+- DEMO: Wind demo fixes
+
+#### [4.2.0-alpha.3] - Note: from 4.2-DEV
+
+- Fixes for first person viewports in METER_OFFSET mode
+
+#### [4.2.0-alpha.2] - Note: from 4.2-DEV
+
+- Unifiy react controllers as `ViewportController`, export from react dir.
+- Add FirstPersonState
+- Add FirstPersonViewport, ThirdPersonViewport
+- Move viewports and some utils out of `lib` folder.
+- Add `start-es6` script to layer-browser
+- Remove UTM_OFFSETS projection mode
+
+#### [4.2.0-alpha.1]
+
+- Add: UTM_OFFSETS projection mode
+
+## Official Releases
 
 ### v4.1 Beta Releases
 

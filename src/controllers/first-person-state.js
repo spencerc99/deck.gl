@@ -284,7 +284,10 @@ export default class FirstPersonState {
   }
 
   _getDirectionFromBearing(bearing) {
-    const spherical = new SphericalCoordinates({bearing, pitch: 90});
+    const spherical = new SphericalCoordinates({
+      bearing,
+      pitch: 90
+    });
     const direction = spherical.toVector3().normalize();
     return direction;
   }

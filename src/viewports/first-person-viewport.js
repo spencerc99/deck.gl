@@ -47,12 +47,17 @@ export default class FirstPersonViewport extends Viewport {
     // const dir = direction ||
     //   getDirectionFromBearingAndPitch({bearing, pitch: 90}).scale([1, -1, 1]);
     // const center = dir ? new Vector3(eye).add(dir) : lookAt;
-    const dir = direction || getDirectionFromBearingAndPitch({bearing, pitch: 90});
+    const dir = direction || getDirectionFromBearingAndPitch({
+      bearing: 180 - bearing,
+      pitch: 90
+    });
+
+    // web mercator world is positive towards south
+
     // .scale([1, -1, 1]);
     const center = dir ? dir : lookAt;
 
     const viewMatrix = new Matrix4()
-      .scale([-1, 1, 1])
       .multiplyRight(new Matrix4().lookAt({eye: [0, 0, 0], center, up}));
 
     super(Object.assign({}, opts, {
