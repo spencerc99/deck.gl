@@ -111,6 +111,8 @@ export default class Viewport {
 
       // Anchor position offset (in meters for geospatial viewports)
       position = [0, 0, 0],
+      // A model matrix to be applied to position, to match the layer props API
+      modelMatrix = null,
 
       distanceScales = null
     } = opts;
@@ -124,15 +126,20 @@ export default class Viewport {
     this.scale = Math.pow(2, zoom);
 
     // Calculate distance scales if lng/lat/zoom are provided
-    const isGeospatialViewport = !isNaN(latitude) || !isNaN(longitude) || !isNaN(zoom);
+    this.isGeospatial = !isNaN(latitude) || !isNaN(longitude) || !isNaN(zoom);
 
-    this.distanceScales = isGeospatialViewport ?
+    this.distanceScales = this.isGeospatial ?
       getMercatorDistanceScales({latitude, longitude, scale: this.scale}) :
       distanceScales || DEFAULT_DISTANCE_SCALES;
 
+    // Apply model matrix if supplied
+    this.position = position;
+    this.modelMatrix = modelMatrix;
+    this.meterOffset = modelMatrix ? modelMatrix.transformVector(position) : position;
+
     // Determine camera center
-    this.center = isGeospatialViewport ?
-      getMercatorWorldPosition({longitude, latitude, zoom, meterOffset: position}) :
+    this.center = this.isGeospatial ?
+      getMercatorWorldPosition({longitude, latitude, zoom, meterOffset: this.meterOffset}) :
       position;
 
     this.viewMatrixUncentered = viewMatrix;
@@ -280,6 +287,25 @@ export default class Viewport {
     return xyz;
   }
 
+  getMercatorParams() {
+    const lngLat = this._addMetersToLngLat(
+      [this.longitude || 0, this.latitude || 0],
+      this.meterOffset
+    );
+    return {
+      longitude: lngLat[0],
+      latitude: lngLat[1]
+    };
+  }
+
+  isMapSynched() {
+    return false;
+  }
+
+  getDistanceScales() {
+    return this.distanceScales;
+  }
+
   getMatrices({modelMatrix = null} = {}) {
     let modelViewProjectionMatrix = this.viewProjectionMatrix;
     let pixelProjectionMatrix = this.pixelProjectionMatrix;
@@ -309,9 +335,7 @@ export default class Viewport {
     return matrices;
   }
 
-  getDistanceScales() {
-    return this.distanceScales;
-  }
+  // EXPERIMENTAL METHODS
 
   getCameraPosition() {
     return this.cameraPosition;
@@ -325,8 +349,22 @@ export default class Viewport {
     return this.cameraUp;
   }
 
-  isMapSynched() {
-    return false;
+  // TODO - these are duplicating WebMercator methods
+  _addMetersToLngLat(lngLatZ, xyz) {
+    const [lng, lat, Z = 0] = lngLatZ;
+    const [deltaLng, deltaLat, deltaZ = 0] = this._metersToLngLatDelta(xyz);
+    return lngLatZ.length === 2 ?
+      [lng + deltaLng, lat + deltaLat] :
+      [lng + deltaLng, lat + deltaLat, Z + deltaZ];
+  }
+
+  _metersToLngLatDelta(xyz) {
+    const [x, y, z = 0] = xyz;
+    assert(Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z), ERR_ARGUMENT);
+    const {pixelsPerMeter, degreesPerPixel} = this.distanceScales;
+    const deltaLng = x * pixelsPerMeter[0] * degreesPerPixel[0];
+    const deltaLat = y * pixelsPerMeter[1] * degreesPerPixel[1];
+    return xyz.length === 2 ? [deltaLng, deltaLat] : [deltaLng, deltaLat, z];
   }
 
   // INTERNAL METHODS

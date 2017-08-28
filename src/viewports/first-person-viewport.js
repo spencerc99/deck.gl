@@ -37,10 +37,10 @@ export default class FirstPersonViewport extends Viewport {
     const {
       // view matrix arguments
       bearing,
-      // pitch,
+      pitch,
       lookAt, // Which point is camera looking at, default along y axis
       direction, // Which direction camera is looking at
-      up = [0, 1, 0] // Defines up direction, default positive y axis,
+      up = [0, 0, 1] // Defines up direction, default positive y axis,
     } = opts;
 
     const eye = opts.eye || opts.position; // Defines eye position

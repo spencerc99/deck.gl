@@ -58,20 +58,23 @@ export default class WebMercatorViewport extends Viewport {
    * A new viewport instance should be created if any parameters have changed.
    */
   /* eslint-disable complexity, max-statements */
-  constructor({
-    // Map state
-    x = 0,
-    y = 0,
-    width,
-    height,
-    latitude,
-    longitude,
-    zoom,
-    pitch,
-    bearing,
-    altitude,
-    farZMultiplier = 10
-  } = {}) {
+  constructor(opts = {}) {
+    let {
+      width,
+      height,
+      latitude,
+      longitude,
+      zoom,
+      pitch,
+      bearing,
+      altitude
+    } = opts;
+
+    const {
+      // x, y, position, ...
+      farZMultiplier = 10
+    } = opts;
+
     // Viewport - support undefined arguments
     width = width !== undefined ? width : DEFAULT_MAP_STATE.width;
     height = height !== undefined ? height : DEFAULT_MAP_STATE.height;
@@ -114,14 +117,15 @@ export default class WebMercatorViewport extends Viewport {
       altitude
     });
 
-    super({
-      x, y, width, height,
+    super(Object.assign({}, opts, {
+      // x, y, position, ...
+      width, height,
       viewMatrix: viewMatrixUncentered,
       longitude,
       latitude,
       zoom,
       projectionMatrix
-    });
+    }));
 
     // Save parameters
     this.latitude = latitude;

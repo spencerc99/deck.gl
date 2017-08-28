@@ -32,79 +32,93 @@ However, to synchronize our 3D data with external perspective-enabled map system
 The map system typically locks in FoV (Field of view), viewing angle (always pitched downward) and altitude (camera height over the “ground”).
 When rendering 3D environments on top of pre-rendered video (e.g. overlaying perception data on top of vehicle log cameras)
 
-
-## Proposal: Support for Cartographic Projection in all Viewports
-
-In deck.gl 4.1 only the WebMercatorViewport can handle layers with geospatial coordinates, as it is the only viewport that can produce the uniforms required by the project module.
-
-By moving some of the required properties into the base viewport, it would be possible to extend cartographic projection to all cameras.
-
 Note: There are subtleties around the positioning of the camera which is handled in the next proposal.
+
+
+## Proposal: Support Optional Cartographic Projection in all Viewports
+
+In deck.gl 4.1 only the WebMercatorViewport can handle layers with geospatial coordinates, as it is the only viewport that can produce the uniforms required by the project module. By moving some of the required properties into the base viewport, it is possible to extend cartographic projection support to all viewports.
+
+Since this affects the entire `Viewport` hierarchy a new hierarchy is proposed, as an alternative to the `Perspective`/`Orthographic` camera class, a `FirstPerson`/`ThirdPerson` centric approach with ability to replace projection matrices on any viewport where that makes sense.
 
 
 ### Viewport
 
+New properties
+- [`longitude`, `latitude`]  (optional) anchor
+- `zoom` scale (TBD - how critical is this?)
+
+- `position` - this is a meter offets
+- `modelMatrix` - this is purely a convenience to make the viewport API more similar to the `Layer` props. When positioning the camera in a scene with `Layer`s using a certain `modelMatrix` it is nice to be able to use the same coordinates and the same `modelMatrix` with the viewport. Since the viewport manages a single position only the application can apply the `modelMatrix` itself.
+
+Since 95%+ of all viewports will be used with a perspective projection matrix, if the `projectionMatrix` prop is not supplied, `Viewport` will try to create a perspective projection matrix using the following props (Note that `aspect` is automatically calculated from `width` and `height`).
+- `fov`
+- `near`
+- `far`
+
+Changes to existing props:
+- `projectionMatrix` - can now be omitted or set to `null`, in which case `Viewport` will try to create a perspective projection matrix from `fov`, `near`, `far`.
+
+
 The current base viewport class would be extended with a lnglat property, meaning that any viewport can calculate the uniforms required for layers with geospatial coordinate systems.
-- lnglat anchor
-- zoom scale
 
-As background, there are a couple critical uniforms needed by the `project` shader module when handling layers with data using geospatial coordinates.
-- projection center
-- distance scales
+New Methods
+* `Viewport.isGeospatial()` can be called to check if a viewport is geospatially "enabled". If longitude, latitude and zoom  are supplied to a viewport, then that viewport `
+* `Viewport.isMapSynched()` offers an easy way for the app to determine if a base map can be displayed under the viewport.
+* `Viewport.getMercatorParameters()` offers a way to get map props that include offsets etc..
 
-
-
-## Proposal: An Alternative Viewport Hierarchy
 
 In deck.gl v4.0, a viewport class hierarchy was introduced to support non-geospatial viewports. It separates between Perspective and Orthographic cameras (inspired by common WebGL frameworks).
 
 In retrospect this separation adds little value as it captures a trivial part of the camera (the projection matrix), while leaving the more difficult problems unsolved, such as control of camera position and direction. Such aspects are important, particularly for the planned animation extensions to deck.gl.
 
-As an alternative to the `Perspective`/`Orthographic` camera class, a `FirstPerson`/`ThirdPerson` approach.
-
-### Viewport
-
-- lnglat anchor
-- zoom scale
-- viewMatrix
-- projectionMatrix - allows for complete application control of all **projection** matrix parameters (including fovs, near/far clipping planes, aspect ratios etc, e.g. using `Matrix4.projection` or `Matrix4.ortho` etc).
-
 
 ### FirstPersonViewport
 
-extends `Viewport`
-
-- player position (lngLat anchor + offset)
-- player direction (TBD)
+Extends `Viewport`. Creates a `Viewport` with a view matrix that is placed in the player's position, with a controllable direction and orientation:
+- `direction` (TBD) - player direction
+- `up` (`Vector3`, `[0, 0, 1]`): specifies the camera up direction
 
 
 ### ThirdPersonViewport
 
-extends `Viewport`
-
-- player position
-- player direction
-- camera direction, relative to player direction
-- camera distance, from player
+This prototyping behind this proposal has so far not focused on `ThirdPersonViewport`. It is expected to extend `Viewport`, possibly with props such as:
+- player `direction`
+- camera `direction`, relative to player direction (additive to player `direction`)
+- camera `distance,` from player
 
 The idea here with two directions being that one might want a third person camera to alwas look at the "player" or object at `position` from a certain relative angle. The absolute directions would be the "sum" of these two directions, modulo wrap-arounds.
+
+See comments under `OrbitViewport` below.
 
 
 ### WebMercatorViewport
 
-inherits from `ThirdPersonViewport`, setting parameters as follows
+Creates a viewport with a special perspective projection matrix with a FOV that works with mapbox-gl, and a view matrix that follows mapbox-gl's undocumented internal bearing/pitch/altitude conventions.
+
+inherits from `Viewport`, setting parameters as follows
 - player position: lnglat
 - player direction: north
 - camera direction: pitch/bearing
 - camera distance: altitude & zoom (zoom dependent, 1.5 screen "heights")
 - fov: pitch dependent
 
-The current WebMercatorViewport could become a subclass of a "Third Person Viewport:
+`WebMercatorViewport` could become a subclass of a "Third Person Viewport although this is not proposed for the initial refactor (mainly because there is not a lot of focus on `ThirdPersonViewport`). If `OrbitViewport` is consolidated with `ThirdPersonViewport` it could make sense to do this change for `WebMercatorViewport`.
 
-It is really a `MapboxViewport` (at least when it comes to perspective mode) as it emulates mapbox-gl's choices of perspective projection.
+Note that this is really a `MapboxViewport` (at least when it comes to perspective mode) as it emulates mapbox-gl's choices of perspective projection. If we start exploring other base maps, we might need to generalize this part of the viewport hierarchy somewhat, but for backwards compatibility purposes, it is was preferred to not change the name of this viewport at this time.
 
 
-## Proposal: Add `Viewport.isMapSynched` method to control map display
+### OrbitViewport
+
+It is recommended that `OrbitViewport` be consolidated with `Viewport`, so that orbit viewports could be used with geospatial data (in this mode orbit viewport coordinates will be interpreted as meter offsets). Most likely either based on, or merged with, `ThirdPersonViewport` however to manage the scope of this RFC it is not part of the proposed changes.
+
+
+### OrthographicViewport and PerspectiveViewport
+
+These should be deprecated. Since they are not extensively used we could deprecate them directly in the next major release. That said, if needed, they can both be supplied as trivial subclasses of `FirstPersonViewport`.
+
+
+### Details on the `Viewport.isMapSynched` method to control map display
 
 As the application will now switch between cameras (viewports), some of which can occasionally display the base map, it would be good to offer an easy way for the app to determine if the base map can be displayed
 
@@ -120,51 +134,23 @@ A new method or property, `isMapSynched` would return false by default, however 
 We could also check zoom levels, potentially moving all mapbox limit checks into the `WebMercatorViewport` viewport.
 
 
-## Proposal: Viewport View Matrix Decomposition support
+## Additional Work: Controllers and Event Handling
 
-Extract traditional camera parameters from any Viewport? We have the `viewMatrix`, which can be decomposed using standard 4x4 matrix techniques.
+This topic turned out to be almost as complicated as the projection mode changes, so it has been broken out into a separate [Controller Architecture RFC](./controller-architecture-rfc.md).
 
-Possible methods:
-* `WebMercatorViewport.getCameraPosition`
-* `WebMercatorViewport.getCameraLookAt`
-* `WebMercatorViewport.getCameraUp`
-* `WebMercatorViewport.getFov`
-* `WebMercatorViewport.getClippingPlanes` -> [near, far]
-
-
-## Proposal: SphericalCoordinates class
-
-While projection matrix creation functions typically take a `lookAt` (Vector3) parameter, directions are often specified as spherical coordinates (pitch and bearing).
-* To make is easy to use both spherical coordinates and direction vectors for the camera, we can extend our math library with a SphericalCoordinates class to make transformations between direction vectors and spherical coordinates easy. We already have an initial implementation.
-
-
-## Additional Work: Event Handling
-
-While the initial use of FirstPersonViewports will be to have them attached to other objects in the geometry, we will soon need "controllers" for these Viewports.
-
-What is the best way to pan (effectively, move around) when viewing at 90 degrees pitch.
-* Do we want a command-mouse drag [THREE.js pointer-lock controls](https://threejs.org/examples/misc_controls_pointerlock.html)
-* Should we provide a classic keyboard interface (arrow keys)?
-
-
-### Switching between modes.
-
-One could imagine asking the application to switch both event controllers and viewport classes when switching between modes. This would keep the Viewports cleaner but make integration harder for the app.
-
-The separation between Viewports / State / Controls / React Controllers is powerful but could perhaps be streamlined. A couple of preparatory PRs have reduced the amount of duplicated code, to simplify work in this area.
 
 ## Open Issues and Discussion Points
 
-* Up directions: ability to specify the camera up direction
 * `modelMatrix`: Allows the application to apply a modelMatrix that transforms both the position and the direction of the camera. Should this be part of the camera
 * meterOffset? - it might convenient to allow the camera to be moved around using meter offsets compared to a lngLat anchor rather than having to recalculate lngLats on every mode.
 - project/unproject - Pixel project/unproject to flat mercator coordinates may not work when pitch exceeds > 85 degrees.
 * VR view matrices - can support for left and right eye matrices be integrated somehow?
 
 
-## References:
+## References
 
-Initial [Infovis Viewport RFC]() for deck.gl v4.
+* Controller Changes [Controller Architecture RFC](./controller-architecture-rfc.md)
+* The initial [Infovis Viewport RFC](../v4.0/non-geospatial-viewports-rfc.md) for deck.gl v4.
 
 deck.gl implementation PRs:
 * [Viewport class refactor](https://github.com/uber/deck.gl/pull/841)
@@ -179,6 +165,12 @@ luma.gl PRs:
 
 
 ## Appendix A: Notes on the `project` shader module
+
+For a future RFC or PR
+
+As background, there are a couple critical uniforms needed by the `project` shader module when handling layers with data using geospatial coordinates.
+- projection center
+- distance scales
 
 * In cartographic coordinate systems, the `project` shader module internally deals with mercator coordinates projected to current zoom level.
 
@@ -242,3 +234,20 @@ Relation to altitude - Allows the application to set the height of the camera in
 This proposal is not favored, mainly because:
 * it keeps adding to an already complicated class
 * it does not handle geospatial coordinates in the general case
+
+
+
+
+## Appendix: Viewport View Matrix Decomposition support
+
+For a future RFC or PR.
+
+Extract traditional camera parameters from any Viewport? We have the `viewMatrix`, which can be decomposed using standard 4x4 matrix techniques.
+
+Possible methods:
+* `WebMercatorViewport.getCameraPosition`
+* `WebMercatorViewport.getCameraLookAt`
+* `WebMercatorViewport.getCameraUp`
+* `WebMercatorViewport.getFov`
+* `WebMercatorViewport.getClippingPlanes` -> [near, far]
+

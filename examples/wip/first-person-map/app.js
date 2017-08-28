@@ -8,22 +8,22 @@ import {StaticMap} from 'react-map-gl';
 import {experimental} from 'deck.gl';
 const {DeckGLMultiView: DeckGL, ViewportLayout} = experimental;
 
-// import DeckGL from './deckgl-multiview';
+// Unified controller, together with state that determines interaction model
 import {ViewportController} from 'deck.gl';
 import {FirstPersonState} from 'deck.gl';
-import {FirstPersonViewport} from 'deck.gl';
 
-// import {MapController} from 'deck.gl';
-import {WebMercatorViewport} from 'deck.gl';
+// Viewport classes provides various views on the state
+import {FirstPersonViewport, WebMercatorViewport} from 'deck.gl';
 
 import {
   COORDINATE_SYSTEM,
-  // PolygonLayer, PointCloudLayer, ScatterplotLayer,
-  ArcLayer
-  // LineLayer, HexagonCellLayer
+  PolygonLayer,
+  PointCloudLayer, ScatterplotLayer,
+  ArcLayer,
+  LineLayer, HexagonCellLayer
 } from 'deck.gl';
 
-// import TripsLayer from '../../trips/trips-layer';
+import TripsLayer from '../../trips/trips-layer';
 
 import {setParameters} from 'luma.gl';
 // import {Vector3} from 'math.gl';
@@ -39,14 +39,14 @@ const DATA_URL = {
 // Set your mapbox token here
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
-// const LIGHT_SETTINGS = {
-//   lightsPosition: [-74.05, 40.7, 8000, -73.5, 41, 5000],
-//   ambientRatio: 0.05,
-//   diffuseRatio: 0.6,
-//   specularRatio: 0.8,
-//   lightsStrength: [3.0, 0.0, 0.5, 0.0],
-//   numberOfLights: 2
-// };
+const LIGHT_SETTINGS = {
+  lightsPosition: [-74.05, 40.7, 8000, -73.5, 41, 5000],
+  ambientRatio: 0.05,
+  diffuseRatio: 0.6,
+  specularRatio: 0.8,
+  lightsStrength: [3.0, 0.0, 0.5, 0.0],
+  numberOfLights: 2
+};
 
 const DEFAULT_VIEWPORT_PROPS = {
   longitude: -74,
@@ -175,37 +175,38 @@ class Root extends Component {
 
   _renderLayers() {
     const {longitude, latitude} = DEFAULT_VIEWPORT_PROPS;
-    // const {viewportProps} = this.state;
-    // const {position} = viewportProps;
+    const {viewportProps} = this.state;
+    const {position} = viewportProps;
 
-    // const {buildings, trips, trailLength, time} = this.state;
-    // if (!buildings || !trips) {
-    //   return [];
-    // }
+    const {buildings, trips} = this.state;
+    const {trailLength, time} = this.state;
+    if (!buildings || !trips) {
+      return [];
+    }
 
     return [
-      // new TripsLayer({
-      //   id: 'trips',
-      //   data: trips,
-      //   getPath: d => d.segments,
-      //   getColor: d => d.vendor === 0 ? [253, 128, 93] : [23, 184, 190],
-      //   opacity: 0.3,
-      //   strokeWidth: 2,
-      //   trailLength,
-      //   currentTime: time
-      // }),
-      // new PolygonLayer({
-      //   id: 'buildings',
-      //   data: buildings,
-      //   extruded: true,
-      //   wireframe: false,
-      //   fp64: true,
-      //   opacity: 0.5,
-      //   getPolygon: f => f.polygon,
-      //   getElevation: f => f.height,
-      //   getFillColor: f => [74, 80, 87],
-      //   lightSettings: LIGHT_SETTINGS
-      // }),
+      new TripsLayer({
+        id: 'trips',
+        data: trips,
+        getPath: d => d.segments,
+        getColor: d => d.vendor === 0 ? [253, 128, 93] : [23, 184, 190],
+        opacity: 0.3,
+        strokeWidth: 2,
+        trailLength,
+        currentTime: time
+      }),
+      new PolygonLayer({
+        id: 'buildings',
+        data: buildings,
+        extruded: true,
+        wireframe: false,
+        fp64: true,
+        opacity: 0.5,
+        getPolygon: f => f.polygon,
+        getElevation: f => f.height,
+        getFillColor: f => [74, 80, 87],
+        lightSettings: LIGHT_SETTINGS
+      }),
       // new PointCloudLayer({
       //   id: 'point-cloud',
       //   outline: true,
@@ -219,18 +220,18 @@ class Root extends Component {
       //   opacity: 1,
       //   radiusPixels: 20
       // }),
-      // new PointCloudLayer({
-      //   id: 'player',
-      //   data: [{
-      //     position,
-      //     color: [0, 255, 255, 255],
-      //     normal: [1, 0, 0]
-      //   }],
-      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
-      //   positionOrigin: [longitude, latitude],
-      //   opacity: 1,
-      //   radiusPixels: 20
-      // }),
+      new PointCloudLayer({
+        id: 'player',
+        data: [{
+          position,
+          color: [0, 255, 255, 255],
+          normal: [1, 0, 0]
+        }],
+        projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+        positionOrigin: [longitude, latitude],
+        opacity: 1,
+        radiusPixels: 20
+      }),
       // new ScatterplotLayer({
       //   id: 'player2',
       //   data: [{
@@ -245,20 +246,20 @@ class Root extends Component {
       //   opacity: 1,
       //   radiusScale: 20
       // }),
-      new ArcLayer({
-        id: 'player2',
-        data: [{
-          sourcePosition: [-400, -400, 0],
-          targetPosition: [-200, -200, 0],
-          color: [0, 255, 0, 255],
-          normal: [1, 0, 0]
-        }],
-        fp64: true,
-        projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
-        positionOrigin: [longitude, latitude],
-        opacity: 1,
-        strokeWidth: 200
-      })
+      // new ArcLayer({
+      //   id: 'player2',
+      //   data: [{
+      //     sourcePosition: [-400, -400, 0],
+      //     targetPosition: [-200, -200, 0],
+      //     color: [0, 255, 0, 255],
+      //     normal: [1, 0, 0]
+      //   }],
+      //   fp64: true,
+      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+      //   positionOrigin: [longitude, latitude],
+      //   opacity: 1,
+      //   strokeWidth: 200
+      // }),
       // new HexagonCellLayer({
       //   id: 'player-hex',
       //   data: [{
@@ -275,10 +276,10 @@ class Root extends Component {
     ];
   }
 
-  render() {
+  _renderViewports() {
     const {viewportProps, fov} = this.state;
 
-    const viewports = [
+    return [
       new FirstPersonViewport({
         ...viewportProps,
         height: viewportProps.height / 2,
@@ -299,6 +300,13 @@ class Root extends Component {
           mapboxApiAccessToken={MAPBOX_TOKEN}/>
       }
     ];
+  }
+
+  render() {
+    const viewports = this._renderViewports();
+
+    // TODO - should ViewportController accept a viewport?
+    const {viewportProps} = this.state;
 
     return (
       <div style={{backgroundColor: '#000'}}>
