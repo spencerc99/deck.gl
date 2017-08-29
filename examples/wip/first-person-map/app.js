@@ -232,6 +232,18 @@ class Root extends Component {
         opacity: 1,
         radiusPixels: 20
       }),
+      new PointCloudLayer({
+        id: 'player',
+        data: [{
+          position: [10, 10, 0],
+          color: [0, 255, 0, 255],
+          normal: [1, 0, 0]
+        }],
+        projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+        positionOrigin: [longitude, latitude],
+        opacity: 1,
+        radiusPixels: 20
+      }),
       // new ScatterplotLayer({
       //   id: 'player2',
       //   data: [{

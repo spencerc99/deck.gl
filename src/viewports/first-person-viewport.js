@@ -64,5 +64,8 @@ export default class FirstPersonViewport extends Viewport {
       viewMatrix,
       position: eye
     }));
+
+    this.distanceScales.pixelsPerMeter = [0.02, 0.02, 0.02];
+
   }
 }
