@@ -3,9 +3,9 @@ import {Vector3, experimental} from 'math.gl';
 const {SphericalCoordinates} = experimental;
 import assert from 'assert';
 
-const MOVEMENT_SPEED = 20;  // 1 meter per keyboard click
+const MOVEMENT_SPEED = 6;  // 1 meter per keyboard click
 // const ROTATION_STEP_RADIANS = 0.03;
-const ROTATION_STEP_DEGREES = 3;
+const ROTATION_STEP_DEGREES = 2;
 
 const defaultState = {
   position: [0, 0, 0],

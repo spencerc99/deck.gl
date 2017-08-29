@@ -11,7 +11,7 @@
 * For deck.gl v5.0 we started working on first person controllers and viewports,
 * For deck.gl v5.0 plus we are introducing a multiviewport architecture.
 
-The combination of various viewports in a single render, feeding them off the same "map" state data, 
+The combination of various viewports in a single render, feeding them off the same "map" state data
 
 ## Details
 
