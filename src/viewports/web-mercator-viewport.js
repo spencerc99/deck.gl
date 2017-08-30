@@ -119,12 +119,15 @@ export default class WebMercatorViewport extends Viewport {
 
     super(Object.assign({}, opts, {
       // x, y, position, ...
+      // TODO / hack - prevent vertical offsets if not FirstPersonViewport
+      position: opts.position && [opts.position[0], opts.position[1], 0],
       width, height,
       viewMatrix: viewMatrixUncentered,
       longitude,
       latitude,
       zoom,
-      projectionMatrix
+      projectionMatrix,
+      focalDistance: 1 // Viewport is already carefully set up to "focus" on ground
     }));
 
     // Save parameters

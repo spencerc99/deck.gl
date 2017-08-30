@@ -28,6 +28,7 @@ export {default as Viewport} from './viewports/viewport';
 export {default as FirstPersonViewport} from './viewports/first-person-viewport';
 export {default as ThirdPersonViewport} from './viewports/third-person-viewport';
 export {default as WebMercatorViewport} from './viewports/web-mercator-viewport';
+export {default as MapboxViewport} from './viewports/mapbox-viewport';
 
 // Do we need to export?
 export {default as FirstPersonState} from './controllers/first-person-state';

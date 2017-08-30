@@ -36,37 +36,33 @@ export default class FirstPersonViewport extends Viewport {
     // TODO - push direction handling into Matrix4.lookAt
     const {
       // view matrix arguments
+      modelMatrix = null,
       bearing,
-      pitch,
-      lookAt, // Which point is camera looking at, default along y axis
+      // pitch,
       direction, // Which direction camera is looking at
       up = [0, 0, 1] // Defines up direction, default positive y axis,
     } = opts;
 
-    const eye = opts.eye || opts.position; // Defines eye position
-    // const dir = direction ||
-    //   getDirectionFromBearingAndPitch({bearing, pitch: 90}).scale([1, -1, 1]);
-    // const center = dir ? new Vector3(eye).add(dir) : lookAt;
     const dir = direction || getDirectionFromBearingAndPitch({
-      bearing: 180 - bearing,
+      bearing,
       pitch: 90
     });
+    // const center = dir ? new Vector3(eye).add(dir) : lookAt;
+    // dir.scale([1, -1, 1]);
 
-    // web mercator world is positive towards south
+    // Direction is relative to model coordinates, of course
+    const center = modelMatrix ? modelMatrix.transformDirection(dir) : dir;
+    // center.scale(12);
 
-    // .scale([1, -1, 1]);
-    const center = dir ? dir : lookAt;
-
+    // Just the direction. All the positioning is done in viewport.js
     const viewMatrix = new Matrix4()
-      .multiplyRight(new Matrix4().lookAt({eye: [0, 0, 0], center, up}));
+      .multiplyRight(
+        new Matrix4().lookAt({eye: [0, 0, 0], center, up})
+      );
 
     super(Object.assign({}, opts, {
-      zoom: 10,
-      viewMatrix,
-      position: eye
+      zoom: null, // triggers meter level zoom
+      viewMatrix
     }));
-
-    // this.distanceScales.pixelsPerMeter = [0.002, 0.002, 0.002];
-
   }
 }

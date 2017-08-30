@@ -18,17 +18,18 @@ import {FirstPersonViewport, WebMercatorViewport} from 'deck.gl';
 import {
   COORDINATE_SYSTEM,
   PolygonLayer,
-  PointCloudLayer, ScatterplotLayer,
-  ArcLayer,
-  HexagonCellLayer
+  PointCloudLayer
+  // ScatterplotLayer, ArcLayer, HexagonCellLayer
 } from 'deck.gl';
 
 import TripsLayer from '../../trips/trips-layer';
 
 import {setParameters} from 'luma.gl';
-import {Vector3} from 'math.gl';
+import {Matrix4} from 'math.gl';
 
 import {json as requestJson} from 'd3-request';
+
+const modelMatrix = new Matrix4().rotateZ(Math.PI / 4);
 
 // Source data CSV
 const DATA_URL = {
@@ -207,19 +208,19 @@ class Root extends Component {
         getFillColor: f => [74, 80, 87],
         lightSettings: LIGHT_SETTINGS
       }),
-      new PointCloudLayer({
-        id: 'point-cloud',
-        outline: true,
-        data: new Array(100).fill(0).map((v, i) => ({
-          position: [(Math.random() - 0.5) * i, (Math.random() - 0.5) * i, Math.random() * i],
-          color: [255, 255, 255, 255],
-          normal: [1, 1, 1]
-        })),
-        projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
-        positionOrigin: [longitude, latitude],
-        opacity: 1,
-        radiusPixels: 3
-      }),
+      // new PointCloudLayer({
+      //   id: 'point-cloud',
+      //   outline: true,
+      //   data: new Array(100).fill(0).map((v, i) => ({
+      //     position: [(Math.random() - 0.5) * i, (Math.random() - 0.5) * i, Math.random() * i],
+      //     color: [255, 255, 255, 255],
+      //     normal: [1, 1, 1]
+      //   })),
+      //   projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
+      //   positionOrigin: [longitude, latitude],
+      //   opacity: 1,
+      //   radiusPixels: 3
+      // }),
       new PointCloudLayer({
         id: 'player',
         data: [{
@@ -229,21 +230,23 @@ class Root extends Component {
         }],
         projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
         positionOrigin: [longitude, latitude],
+        modelMatrix,
         opacity: 1,
         radiusPixels: 20
       }),
       new PointCloudLayer({
-        id: 'player',
+        id: 'ref-point',
         data: [{
-          position: [10, 10, 0],
-          color: [0, 255, 0, 255],
+          position: [-1, 0, 2],
+          color: [255, 0, 0, 255],
           normal: [1, 0, 0]
         }],
         projectionMode: COORDINATE_SYSTEM.METER_OFFSETS,
         positionOrigin: [longitude, latitude],
+        modelMatrix,
         opacity: 1,
         radiusPixels: 20
-      }),
+      })
       // new ScatterplotLayer({
       //   id: 'player2',
       //   data: [{
@@ -294,10 +297,9 @@ class Root extends Component {
     return [
       new FirstPersonViewport({
         ...viewportProps,
+        modelMatrix,
         height: viewportProps.height / 2,
-        fovy: fov, // Field of view covered by camera
-        near: 1, // Distance of near clipping plane
-        far: 10000 // Distance of far clipping plane
+        fovy: fov // Field of view covered by camera
       }),
       {
         viewport: new WebMercatorViewport({
@@ -337,7 +339,7 @@ class Root extends Component {
               width={viewportProps.width}
               height={viewportProps.height}
               viewports={viewports}
-              useDevicePixelRatio={false}
+              useDevicePixelRatio={true}
               layers={this._renderLayers()}
               onWebGLInitialized={this._initialize} />
 

@@ -189,29 +189,50 @@ export function getUniformsFromViewport({
   const distanceScales = viewport.getDistanceScales();
 
   const devicePixelRatio = (window && window.devicePixelRatio) || 1;
+  const viewportSize = [viewport.width * devicePixelRatio, viewport.height * devicePixelRatio];
+
+  const glModelMatrix = new Float32Array(modelMatrix || IDENTITY_MATRIX);
+  const glViewProjectionMatrix = new Float32Array(viewProjectionMatrix);
 
   return {
     // Projection mode values
-    projectionMode,
-    projectionCenter,
+    project_uMode: projectionMode,
+    project_uCenter: projectionCenter,
 
     // Screen size
-    viewportSize: [viewport.width * devicePixelRatio, viewport.height * devicePixelRatio],
-    devicePixelRatio,
+    project_uViewportSize: viewportSize,
+    project_uDevicePixelRatio: devicePixelRatio,
+
+    project_uFocalDistance: viewport.focalDistance, // Distance at which screen pixels are projected
+    project_uPixelsPerUnit: distanceScales.pixelsPerMeter,
+    project_uScale: viewport.scale, // This is the mercator scale (2 ** zoom)
+
+    project_uModelMatrix: glModelMatrix,
+    project_uViewProjectionMatrix: glViewProjectionMatrix,
+
+    // 64 bit support
+    project_uViewProjectionMatrixFP64: fp64ifyMatrix4(viewProjectionMatrix),
+
+    // This is for lighting calculations
+    project_uCameraPosition: new Float32Array(cameraPos),
+
+    //
+    // BACKWARDS COMPAT
+    //
+
+    modelMatrix: glModelMatrix,
+    projectionMatrix: glViewProjectionMatrix,
 
     projectionPixelsPerUnit: distanceScales.pixelsPerMeter,
     projectionScale: viewport.scale, // This is the mercator scale (2 ** zoom)
 
-    // Projection matrices
-    modelMatrix: new Float32Array(modelMatrix || IDENTITY_MATRIX),
-    // viewMatrix: new Float32Array(viewMatrix),
-    projectionMatrix: new Float32Array(viewProjectionMatrix),
-
-    // 64 bit support
-    projectionFP64: fp64ifyMatrix4(viewProjectionMatrix),
-    projectionScaleFP64: fp64ify(viewport.scale), // Deprecated?
+    viewportSize,
+    devicePixelRatio,
 
     // This is for lighting calculations
-    cameraPos: new Float32Array(cameraPos)
+    cameraPos: new Float32Array(cameraPos),
+
+    projectionFP64: fp64ifyMatrix4(viewProjectionMatrix),
+    projectionScaleFP64: fp64ify(viewport.scale) // Deprecated?
   };
 }

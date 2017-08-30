@@ -32,13 +32,16 @@ import mat4_perspective from 'gl-mat4/perspective';
 
 import {transformVector, createMat4, extractCameraVectors} from '../math/utils';
 
-import {Matrix4} from 'math.gl';
+import {Matrix4, Vector3} from 'math.gl';
+
+const ZERO_VECTOR = [0, 0, 0];
 
 import {
   // projectFlat,
   // unprojectFlat,
   getMercatorDistanceScales,
-  getMercatorWorldPosition
+  getMercatorWorldPosition,
+  getMeterZoom
   // makeProjectionMatrixFromMercatorParams,
   // makeUncenteredViewMatrixFromMercatorParams
   // makeViewMatricesFromMercatorParams
@@ -54,6 +57,8 @@ const DEFAULT_DISTANCE_SCALES = {
   pixelsPerDegree: [1, 1, 1],
   degreesPerPixel: [1, 1, 1]
 };
+
+const DEFAULT_ZOOM = 0;
 
 const ERR_ARGUMENT = 'Illegal argument to Viewport';
 
@@ -84,6 +89,7 @@ export default class Viewport {
    * Note: The Viewport is immutable in the sense that it only has accessors.
    * A new viewport instance should be created if any parameters have changed.
    */
+  /* eslint-disable complexity, max-statements */
   constructor(opts = {}) {
     const {
       // Window width/height in pixels (for pixel projection)
@@ -100,7 +106,7 @@ export default class Viewport {
 
       // Perspective projection matrix parameters, used if projectionMatrix not supplied
       fovy = 75,
-      near = 1,  // Distance of near clipping plane
+      near = 0.01,  // Distance of near clipping plane
       far = 10000, // Distance of far clipping plane
       aspect = null, // Defaults to width/height
 
@@ -110,44 +116,62 @@ export default class Viewport {
       zoom = null,
 
       // Anchor position offset (in meters for geospatial viewports)
-      position = [0, 0, 0],
+      position = null,
       // A model matrix to be applied to position, to match the layer props API
       modelMatrix = null,
 
       distanceScales = null
     } = opts;
 
-    // Silently allow apps to send in 0,0
+    // Check if we have a geospatial anchor
+    this.isGeospatial = Number.isFinite(latitude) && Number.isFinite(longitude);
+
+    // Silently allow apps to send in w,h = 0,0
     this.x = x;
     this.y = y;
     this.width = width || 1;
     this.height = height || 1;
-    this.zoom = Number.isFinite(zoom) ? zoom : 0;
-    this.scale = Math.pow(2, zoom);
+
+    this.zoom = zoom;
+    if (!Number.isFinite(this.zoom)) {
+      this.zoom = this.isGeospatial ? getMeterZoom({latitude}) : DEFAULT_ZOOM;
+    }
+    this.scale = Math.pow(2, this.zoom);
 
     // Calculate distance scales if lng/lat/zoom are provided
-    this.isGeospatial = !isNaN(latitude) || !isNaN(longitude) || !isNaN(zoom);
-
     this.distanceScales = this.isGeospatial ?
       getMercatorDistanceScales({latitude, longitude, scale: this.scale}) :
       distanceScales || DEFAULT_DISTANCE_SCALES;
 
-    // Apply model matrix if supplied
-    this.position = position;
-    this.modelMatrix = modelMatrix;
-    this.meterOffset = modelMatrix ? modelMatrix.transformVector(position) : position;
+    this.focalDistance = opts.focalDistance || 1;
+
+    const SCALE = 1;
+
+    this.distanceScales.metersPerPixel =
+      new Vector3(this.distanceScales.metersPerPixel).scale(SCALE);
+    this.distanceScales.pixelsPerMeter =
+      new Vector3(this.distanceScales.pixelsPerMeter).scale(1 / SCALE);
+
+    this.position = ZERO_VECTOR;
+    if (position) {
+      // Apply model matrix if supplied
+      this.position = position;
+      this.modelMatrix = modelMatrix;
+      this.meterOffset = modelMatrix ? modelMatrix.transformVector(position) : position;
+    }
 
     // Determine camera center
     this.center = this.isGeospatial ?
-      getMercatorWorldPosition({longitude, latitude, zoom, meterOffset: this.meterOffset}) :
+      getMercatorWorldPosition({
+        longitude, latitude, zoom: this.zoom, meterOffset: this.meterOffset
+      }) :
       position;
+
+    // console.log(this.scale, this.distanceScales.pixelsPerMeter);
 
     this.viewMatrixUncentered = viewMatrix;
 
     // Make a centered version of the matrix for projection modes without an offset
-    // this.viewMatrix = mat4_translate(this.viewMatrix, , [0, 0, 0]);
-    // this.viewMatrix = mat4_translate(
-    //   this.viewMatrix, this.viewMatrix, this.center.clone().negate());
     this.viewMatrix = new Matrix4()
       // Apply the uncentered view matrix
       .multiplyRight(this.viewMatrixUncentered)
@@ -155,7 +179,7 @@ export default class Viewport {
       // but GL expects lower left, so we flip it around the center after all transforms are done
       .scale([1, -1, 1])
       // And center it
-      .translate(this.center.clone().negate());
+      .translate(new Vector3(this.center).negate());
 
     // Create a projection matrix if not supplied
     this.projectionMatrix = projectionMatrix || createPerspectiveProjectionMatrix({
@@ -179,6 +203,7 @@ export default class Viewport {
     this.unprojectFlat = this.unprojectFlat.bind(this);
     this.getMatrices = this.getMatrices.bind(this);
   }
+  /* eslint-enable complexity, max-statements */
 
   // Two viewports are equal if width and height are identical, and if
   // their view and projection matrices are (approximately) equal.
