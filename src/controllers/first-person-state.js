@@ -350,6 +350,26 @@ export default class FirstPersonState {
     });
   }
 
+  moveUp() {
+    const {position, direction} = this._viewportProps;
+    const delta = [0, 0, 1];
+    return this._getUpdatedState({
+      // pitch: this._viewportProps.pitch + 3
+      position: new Vector3(position).add(delta),
+      lookAt: new Vector3(position).add(direction)
+    });
+  }
+
+  moveDown() {
+    const {position, direction} = this._viewportProps;
+    const delta = position[2] >= 1 ? [0, 0, -1] : [0, 0, 0];
+    return this._getUpdatedState({
+      // pitch: this._viewportProps.pitch + 3
+      position: new Vector3(position).add(delta),
+      lookAt: new Vector3(position).add(direction)
+    });
+  }
+
   zoomIn() {
     return this._getUpdatedState({
       zoom: this._viewportProps.zoom + 0.2

@@ -305,7 +305,10 @@ export default class Controls {
       '=': 'zoomIn',
       '+': 'zoomIn',
 
-      '-': 'zoomOut'
+      '-': 'zoomOut',
+
+      '[': 'moveDown',
+      ']': 'moveUp'
     };
 
     // keyCode is deprecated from web standards

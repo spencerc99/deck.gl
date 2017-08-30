@@ -61,11 +61,12 @@ export default class FirstPersonViewport extends Viewport {
       .multiplyRight(new Matrix4().lookAt({eye: [0, 0, 0], center, up}));
 
     super(Object.assign({}, opts, {
+      zoom: 10,
       viewMatrix,
       position: eye
     }));
 
-    this.distanceScales.pixelsPerMeter = [0.02, 0.02, 0.02];
+    // this.distanceScales.pixelsPerMeter = [0.002, 0.002, 0.002];
 
   }
 }
