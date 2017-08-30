@@ -1,8 +1,11 @@
-/* global window,document */
+/* global window,document, setInterval*/
 import React, {Component} from 'react';
 import {render} from 'react-dom';
-import MapGL from 'react-map-gl';
+// import MapGL from 'react-map-gl';
+import {StaticMap} from 'react-map-gl';
 import DeckGLOverlay from './deckgl-overlay.js';
+import {MapController} from 'deck.gl/dist/controllers';
+// import EventManager from '../../src/controllers/events/event-manager';
 
 import {json as requestJson} from 'd3-request';
 
@@ -37,6 +40,8 @@ class Root extends Component {
   componentDidMount() {
     window.addEventListener('resize', this._resize.bind(this));
     this._resize();
+    // TODO: this is to just simulate viwport prop change and test animation.
+    this._interval = setInterval(() => this._toggleViewport(), 5000);
   }
 
   _resize() {
@@ -52,18 +57,36 @@ class Root extends Component {
     });
   }
 
+  // TODO: this is to just simulate viwport prop change and test animation.
+  _toggleViewport() {
+    const newViewport = {};
+    // console.log(`bearing: ${this.state.viewport.bearing}`)
+    newViewport.pitch = (this.state.viewport.pitch === 0) ? 60.0 : 0.0;
+    newViewport.bearing = (this.state.viewport.bearing === 0) ? 90.0 : 0.0;
+    this.setState({
+      viewport: {...this.state.viewport, ...newViewport}
+    });
+  }
+
   render() {
     const {viewport, data} = this.state;
 
     return (
-      <MapGL
+      <MapController
         {...viewport}
         onViewportChange={this._onViewportChange.bind(this)}
-        mapboxApiAccessToken={MAPBOX_TOKEN}>
-        <DeckGLOverlay viewport={viewport}
-          data={data}
-          colorScale={colorScale} />
-      </MapGL>
+        animateViewport={true}>
+        <StaticMap
+          {...viewport}
+          onViewportChange={this._onViewportChange.bind(this)}
+          mapboxApiAccessToken={MAPBOX_TOKEN}>
+          <DeckGLOverlay
+            viewport={viewport}
+            data={data}
+            colorScale={colorScale}
+          />
+        </StaticMap>
+      </MapController>
     );
   }
 }
